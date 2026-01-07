@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:fullproject/models/state_city.dart';
+import '../models/state_city.dart';
 
 class UserFormState {
   File? image;
@@ -23,6 +23,7 @@ class UserFormState {
 class UserFormStream {
   final _controller = StreamController<UserFormState>.broadcast();
 
+  // Private state
   UserFormState _state = UserFormState(
     passwordRules: {
       "Min 8 chars": false,
@@ -32,8 +33,10 @@ class UserFormStream {
     },
   );
 
+  // ✅ Public getter for initialData
+  UserFormState get currentState => _state;
+
   Stream<UserFormState> get stream => _controller.stream;
-  UserFormState get current => _state;
 
   void updatePassword(String v) {
     _state.passwordRules = {

@@ -1,4 +1,4 @@
-import 'package:fullproject/models/state_city.dart';
+import 'state_city.dart';
 
 class Users {
   int? id;

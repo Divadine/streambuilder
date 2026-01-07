@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:fullproject/database/database_helper.dart';
-import 'package:fullproject/screens/add_edit_user.dart';
-import 'package:fullproject/screens/user_detail.dart';
+import '../database/database_helper.dart';
+import 'add_edit_user.dart';
+import '../models/users.dart';
+import 'user_detail.dart';
 
 class HomeScreen extends StatelessWidget {
   HomeScreen({super.key}) {
-    DatabaseHelper.instance.refreshUsers();
+    DatabaseHelper.instance.showUsers();
   }
 
   @override
@@ -21,28 +22,37 @@ class HomeScreen extends StatelessWidget {
           );
         },
       ),
-      body: StreamBuilder(
+      body: StreamBuilder<List<Users>>(
         stream: DatabaseHelper.instance.userStream,
         builder: (context, snapshot) {
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(child: Text("No Users"));
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
           }
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text("No Users Available"));
+          }
+
           final users = snapshot.data!;
           return ListView.builder(
             itemCount: users.length,
-            itemBuilder: (_, i) => UserCard(
-              user: users[i],
-              onEdit: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => EditUserScreen(user: users[i]),
-                  ),
-                );
-              },
-              onDelete: () =>
-                  DatabaseHelper.instance.deleteUser(users[i].id!),
-            ),
+            itemBuilder: (_, i) {
+              return UserCard(
+                user: users[i],
+                onEdit: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => EditUserScreen(user: users[i]),
+                    ),
+                  );
+                },
+                onDelete: () =>
+                    DatabaseHelper.instance.deleteUser(users[i].id!),
+              );
+            },
           );
         },
       ),

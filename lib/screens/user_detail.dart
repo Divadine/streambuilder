@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:fullproject/models/users.dart';
+import '../models/users.dart';
 
 class UserCard extends StatelessWidget {
   final Users user;
@@ -20,19 +20,40 @@ class UserCard extends StatelessWidget {
       margin: const EdgeInsets.all(8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundImage: user.profilePic != null
-              ? FileImage(File(user.profilePic!))
-              : null,
+          radius: 25,
+          backgroundImage:
+          user.profilePic != null ? FileImage(File(user.profilePic!)) : null,
           child: user.profilePic == null
-              ? const Icon(Icons.person)
+              ? const Icon(Icons.person, size: 30)
               : null,
         ),
         title: Text('${user.firstName} ${user.lastName}'),
         subtitle: Text(
-            '${user.gender} • ${user.selectedState?.name}, ${user.selectedCity?.name}'),
+            '${user.gender} • ${user.selectedState?.name ?? "-"}, ${user.selectedCity?.name ?? "-"}'),
         trailing: IconButton(
           icon: const Icon(Icons.delete, color: Colors.red),
-          onPressed: onDelete,
+          onPressed: () {
+            showDialog(
+              context: context,
+              builder: (_) => AlertDialog(
+                title: const Text("Delete User"),
+                content: const Text("Are you sure you want to delete this user?"),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: const Text("Cancel"),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      onDelete();
+                      Navigator.pop(context);
+                    },
+                    child: const Text("Delete", style: TextStyle(color: Colors.red)),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
         onTap: onEdit,
       ),

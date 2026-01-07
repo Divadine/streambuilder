@@ -2,8 +2,9 @@ import 'dart:async';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-import 'package:fullproject/models/users.dart';
-import 'package:fullproject/data/state_city_data.dart';
+import '../models/users.dart';
+import '../data/state_city_data.dart';
+import '../models/state_city.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._internal();
@@ -39,15 +40,23 @@ class DatabaseHelper {
     });
   }
 
-  Future<void> refreshUsers() async {
+  Future<void> showUsers() async {
     final db = await database;
     final res = await db.query('users', orderBy: 'id DESC');
 
     final users = res.map((e) {
       final u = Users.fromMap(e);
-      u.selectedState = states.firstWhere((s) => s.id == e['state_id']);
-      u.selectedCity =
-          u.selectedState!.cities.firstWhere((c) => c.id == e['city_id']);
+
+      u.selectedState = states.firstWhere(
+            (s) => s.id == e['state_id'],
+        orElse: () => StateModel(id: 0, name: '', cities: []),
+      );
+
+      u.selectedCity = u.selectedState!.cities.firstWhere(
+            (c) => c.id == e['city_id'],
+        orElse: () => CityModel(id: 0, name: '', stateId: u.selectedState!.id),
+      );
+
       return u;
     }).toList();
 
@@ -57,19 +66,18 @@ class DatabaseHelper {
   Future<void> insertUser(Users u) async {
     final db = await database;
     await db.insert('users', u.toMap());
-    refreshUsers();
+    showUsers();
   }
 
   Future<void> updateUser(Users u) async {
     final db = await database;
-    await db.update('users', u.toMap(),
-        where: 'id=?', whereArgs: [u.id]);
-    refreshUsers();
+    await db.update('users', u.toMap(), where: 'id=?', whereArgs: [u.id]);
+    showUsers();
   }
 
   Future<void> deleteUser(int id) async {
     final db = await database;
     await db.delete('users', where: 'id=?', whereArgs: [id]);
-    refreshUsers();
+    showUsers();
   }
 }

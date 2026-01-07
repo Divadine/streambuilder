@@ -1,13 +1,12 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'package:fullproject/database/database_helper.dart';
-import 'package:fullproject/data/state_city_data.dart';
-import 'package:fullproject/models/users.dart';
-import 'package:fullproject/models/state_city.dart';
-import 'package:fullproject/streams/user_form_stream.dart';
+import '../database/database_helper.dart';
+import '../data/state_city_data.dart';
+import '../models/users.dart';
+import '../models/state_city.dart';
+import '../streams/user_form_stream.dart';
 
 class EditUserScreen extends StatefulWidget {
   final Users? user;
@@ -46,8 +45,12 @@ class _EditUserScreenState extends State<EditUserScreen> {
       }
 
       _formStream.updateGender(widget.user!.gender);
-      _formStream.updateState(widget.user!.selectedState!);
-      _formStream.updateCity(widget.user!.selectedCity!);
+      if (widget.user!.selectedState != null) {
+        _formStream.updateState(widget.user!.selectedState!);
+      }
+      if (widget.user!.selectedCity != null) {
+        _formStream.updateCity(widget.user!.selectedCity!);
+      }
       _formStream.updateAgree(true);
       _formStream.updatePassword(password.text);
     }
@@ -79,7 +82,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
       ),
       body: StreamBuilder<UserFormState>(
         stream: _formStream.stream,
-        initialData: _formStream.current,
+        initialData: _formStream.currentState, // ✅ fixed getter
         builder: (context, snapshot) {
           final state = snapshot.data!;
 
@@ -89,7 +92,6 @@ class _EditUserScreenState extends State<EditUserScreen> {
               key: _formKey,
               child: Column(
                 children: [
-                  /// PROFILE IMAGE
                   GestureDetector(
                     onTap: _pickImage,
                     child: CircleAvatar(
@@ -101,57 +103,38 @@ class _EditUserScreenState extends State<EditUserScreen> {
                           : null,
                     ),
                   ),
-
                   const SizedBox(height: 16),
-
-                  /// FIRST NAME
                   TextFormField(
                     controller: firstName,
-                    decoration:
-                    const InputDecoration(labelText: "First Name"),
+                    decoration: const InputDecoration(labelText: "First Name"),
                     validator: (v) =>
                     v == null || v.length < 3 ? "Min 3 chars" : null,
                   ),
-
                   const SizedBox(height: 10),
-
-                  /// LAST NAME
                   TextFormField(
                     controller: lastName,
-                    decoration:
-                    const InputDecoration(labelText: "Last Name"),
-                    validator: (v) =>
-                    v == null || v.isEmpty ? "Required" : null,
+                    decoration: const InputDecoration(labelText: "Last Name"),
+                    validator: (v) => v == null || v.isEmpty ? "Required" : null,
                   ),
-
                   const SizedBox(height: 10),
-
-                  /// PHONE
                   TextFormField(
                     controller: phone,
                     keyboardType: TextInputType.phone,
-                    decoration:
-                    const InputDecoration(labelText: "Phone Number"),
+                    decoration: const InputDecoration(labelText: "Phone Number"),
                     validator: (v) =>
                     v == null || v.length != 10 ? "10 digits required" : null,
                   ),
-
                   const SizedBox(height: 10),
-
-                  /// PASSWORD
                   TextFormField(
                     controller: password,
                     obscureText: true,
-                    decoration:
-                    const InputDecoration(labelText: "Password"),
+                    decoration: const InputDecoration(labelText: "Password"),
                     onChanged: _formStream.updatePassword,
                     validator: (_) => state.passwordRules.containsValue(false)
                         ? "Password rules not met"
                         : null,
                   ),
-
                   const SizedBox(height: 6),
-
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: state.passwordRules.entries.map((e) {
@@ -168,10 +151,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
                       );
                     }).toList(),
                   ),
-
                   const SizedBox(height: 10),
-
-                  /// DOB
                   TextFormField(
                     controller: dob,
                     readOnly: true,
@@ -190,26 +170,19 @@ class _EditUserScreenState extends State<EditUserScreen> {
                     validator: (v) =>
                     v == null || v.isEmpty ? "Select DOB" : null,
                   ),
-
                   const SizedBox(height: 10),
-
-                  /// GENDER
                   DropdownButtonFormField<String>(
                     value: state.gender,
                     hint: const Text("Select Gender"),
                     items: ['Male', 'Female', 'Other']
-                        .map((e) =>
-                        DropdownMenuItem(value: e, child: Text(e)))
+                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
                         .toList(),
                     onChanged: (v) {
                       if (v != null) _formStream.updateGender(v);
                     },
                     validator: (v) => v == null ? "Select gender" : null,
                   ),
-
                   const SizedBox(height: 10),
-
-                  /// STATE
                   DropdownButtonFormField<StateModel>(
                     value: state.state,
                     hint: const Text("Select State"),
@@ -224,10 +197,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
                     },
                     validator: (v) => v == null ? "Select state" : null,
                   ),
-
                   const SizedBox(height: 10),
-
-                  /// CITY
                   DropdownButtonFormField<CityModel>(
                     value: state.city,
                     hint: const Text("Select City"),
@@ -242,10 +212,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
                     },
                     validator: (v) => v == null ? "Select city" : null,
                   ),
-
                   const SizedBox(height: 10),
-
-                  /// AGREE
                   CheckboxListTile(
                     title: const Text("Agree & Accept"),
                     value: state.agree,
@@ -253,14 +220,10 @@ class _EditUserScreenState extends State<EditUserScreen> {
                       if (v != null) _formStream.updateAgree(v);
                     },
                   ),
-
                   const SizedBox(height: 20),
-
-                  /// SAVE
                   ElevatedButton(
                     onPressed: () async {
-                      if (!_formKey.currentState!.validate() ||
-                          !state.agree) {
+                      if (!_formKey.currentState!.validate() || !state.agree) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content: Text("Complete all fields"),
